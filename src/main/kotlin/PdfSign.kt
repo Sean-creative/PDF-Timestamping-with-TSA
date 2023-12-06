@@ -58,11 +58,12 @@ object PdfSign {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss") // 포맷팅된 UTC 시간 출력
             val formattedUTCTime = currentUTCTime.format(formatter)
             println("현재 UTC 시간: $formattedUTCTime")
-            signByteArray( //date는 원하는 시간을 하드코딩 해도 됩니다. ex) 2023-12-07 01:22:22
+            signByteArray(
+                //date는 원하는 시간을 하드코딩 해도 됩니다. ex) 2023-12-07 01:22:22
                 // 단, UTC기준으로 넣어야하기 때문에 PDF 입장에서 +9시간을 했을 때 미래시간으로 인식하는 오류를 조심하세요.
                 Param(File("sample.pdf").readBytes(), cert, formattedUTCTime)
             )?.also {
-                File("sample1_signed.pdf").writeBytes(it)
+                File("sample_signed.pdf").writeBytes(it)
             } ?: error("file error")
         } catch (e: Throwable) {
             println(e.localizedMessage)
