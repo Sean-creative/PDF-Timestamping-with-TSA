@@ -20,4 +20,4 @@ Kotlin 언어를 사용했으며 PDF파일과 인증서(cert)를 input으로 넣
     2. openssl을 이용해 → key 파일을 만들고
     3. key 파일을 이용해 → csr 파일을 만들고
     4. csr, cnf, key 파일을 이용해 → crt 파일을 만들고
-    5. crt, key 파일을 이용해 → pdf 파일 생성!
+    5. crt, key 파일을 이용해 → pfx 파일 생성!
