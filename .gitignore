@@ -1,0 +1,17 @@
+# Compiled files
+*.class
+*.jar
+
+# Log files
+*.log
+
+# IntelliJ IDEA
+.idea/
+
+# Eclipse
+.classpath
+.project
+
+# Gradle
+.gradle/
+build/
