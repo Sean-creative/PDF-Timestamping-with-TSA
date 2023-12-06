@@ -9,3 +9,14 @@
 Kotlin 언어를 사용했으며 PDF파일과 인증서(cert)를 input으로 넣으면 output으로 Timestamp(타임스탬프)가 적용된 인증 PDF가 나옵니다. 
 
 이 프로젝트에서는 Apache PDFBox 라이브러리를 활용하여 TSA(Time-Stamp Authority)로부터 TSAClient를 호출합니다.
+
+
+## 👉 프로젝트에 필요한 Input 파일
+
+- 이 프로젝트에는 input으로 pdf, pfx 파일이 필요합니다.
+- pfx 파일을 직접 만드는 법은 다음과 같습니다.
+    1. openssl을 설치
+    2. openssl을 이용해 → key 파일을 만들고
+    3. key 파일을 이용해 → csr 파일을 만들고
+    4. csr, cnf, key 파일을 이용해 → crt 파일을 만들고
+    5. crt, key 파일을 이용해 → pdf 파일 생성!
