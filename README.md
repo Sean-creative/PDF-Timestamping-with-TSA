@@ -14,6 +14,7 @@ Kotlin 언어를 사용했으며 PDF파일과 인증서(cert)를 input으로 넣
 # 👉 프로젝트에 필요한 Input 파일
 
 - 이 프로젝트에는 input으로 pdf, pfx 파일이 필요합니다.
+    - sample로 pdf, pfx, 인증이 완료된 pdf 이렇게 총 3개 파일을 넣어놨습니다.
 - pfx 파일을 직접 만드는 법은 다음과 같습니다.
     1. openssl을 설치
     2. openssl을 이용해 → key 파일을 만들고
