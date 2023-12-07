@@ -23,5 +23,15 @@ Kotlin 언어를 사용했으며 PDF파일과 인증서(cert)를 input으로 넣
 
 <br/>
 
+- 생성한 인증서 <br/>
+![Screenshot_40](https://github.com/Sean-creative/PDF-Timestamping-with-TSA/assets/49125201/ddbe9fd1-3eba-4863-8ecb-f4b620b91874)
+
+- 서비스 실행을 완료했을 때
+![Screenshot_41](https://github.com/Sean-creative/PDF-Timestamping-with-TSA/assets/49125201/717c1e7c-1527-48b9-8b0f-5e550736dadd)
+
+<br/>
+
 ### 해당 프로젝트를 참조했습니다.
 -  https://github.com/ETDA/PDFTimestamping
+
+
