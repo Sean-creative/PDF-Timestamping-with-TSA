@@ -23,7 +23,7 @@ import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.ArrayList
 
-class Tsa() {
+class Tsa {
     companion object {
         val digest: MessageDigest = MessageDigest.getInstance("SHA-256") //해시함수의 한 종류 - 32바이트의 해시값
         lateinit var token: ByteArray
