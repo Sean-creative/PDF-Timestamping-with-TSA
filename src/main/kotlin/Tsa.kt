@@ -21,7 +21,6 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.ArrayList
 
 class Tsa {
     companion object {
@@ -29,7 +28,7 @@ class Tsa {
         val digest: MessageDigest = MessageDigest.getInstance("SHA-256")
 
         // Timestamp Token을 저장할 ByteArray 변수
-        lateinit var token: ByteArray
+        lateinit var timeStampToken: ByteArray
     }
 
     // 주어진 해시 알고리즘에 대한 ASN.1 OID를 반환하는 함수
@@ -48,70 +47,94 @@ class Tsa {
 
     // Timestamp Token을 생성하여 반환하는 함수
     @Throws(Exception::class)
-    private fun getTimeStampToken(messageImprint: ByteArray?): ByteArray {
-        // MessageDigest 초기화 및 해시 계산
+    private fun getTimeStampToken(signature: ByteArray?): ByteArray {
+        //만약 이전에 다른 데이터에 대한 해시를 계산했다면, 그 상태를 초기화하여 새로운 데이터에 대한 해시를 계산할 수 있도록함
         digest.reset()
-        val hash = digest.digest(messageImprint)
+        //signature 바이트 배열에 대한 해시 값을 계산
+        val hash = digest.digest(signature)
 
-        // 32-bit cryptographic nonce 생성
+        // 암호학적으로 안전한 난수를 생성
         val random = SecureRandom()
+        // 32-bit 난수 생성
         val nonce = random.nextInt()
+        // nonce 변수에 저장된 값은 나중에 Timestamp Token을 생성할 때 서버에 의해 생성된 고유한 값으로 사용될 수 있습니다.
+        // 이러한 고유한 값은 Replay 공격과 같은 보안 문제를 방지하는 데 사용됩니다.
+        // Replay 공격은 이전에 생성된 타임스탬프를 다시 사용하여 시간을 조작하려는 시도를 가리킵니다.
 
-        // TSA(Timestamp Authority) 요청 생성
+
+        // TimeStampRequestGenerator = Timestamp Token을 요청하기 위한 정보를 생성하는 데 사용
         val tsaGenerator = TimeStampRequestGenerator()
+        // 인증서를 요청하도록 설정
         tsaGenerator.setCertReq(true)
+
+        // 현재 해시 알고리즘에 해당하는 ASN.1 OID (Object Identifier)를 가져옴
         val oid = getHashObjectIdentifier(digest.algorithm)
+        // TSA에게 전송할 Timestamp Token 요청을 생성합니다.
+        // oid는 사용된 해시 알고리즘의 OID이고, hash는 서명에 사용된 데이터의 해시 값입니다.
+        // BigInteger.valueOf(nonce.toLong())는 Replay 공격을 방지하기 위해 생성된 고유한 난수입니다.
         val request: TimeStampRequest = tsaGenerator.generate(oid, hash, BigInteger.valueOf(nonce.toLong()))
 
-        // Timestamp Token 생성
+        // 서명 정보를 생성
         val signerInfoGenerator: SignerInfoGenerator = JcaSimpleSignerInfoGeneratorBuilder().build(
             "SHA256WithRSAEncryption",
             PdfSign.cert.privateKey,
             PdfSign.cert.certificate as X509Certificate
         )
+        // DigestCalculator는 해시를 계산하는데 사용
         val digestCalculator: DigestCalculator = JcaDigestCalculatorProviderBuilder()
             .setProvider(BouncyCastleProvider())
             .build()
             .get(signerInfoGenerator.digestAlgorithm)
-        val tstGen = TimeStampTokenGenerator(
+        // TimeStampTokenGenerator를 통해 나중에 타임스탬프 토큰을 생성
+        val timeStampTokenGenerator = TimeStampTokenGenerator(
             signerInfoGenerator, digestCalculator, ASN1ObjectIdentifier("2.5.29.32.0")
         )
-        val certList: MutableList<X509Certificate?> = ArrayList()
+
+        val certList: MutableList<X509Certificate?> = mutableListOf()
         certList.add(PdfSign.cert.certificate as X509Certificate)
         val certs = JcaCertStore(certList)
-        tstGen.addCRLs(certs)
-        tstGen.addCertificates(certs)
+        //서명 시간 정보를 담은 타임스탬프 토큰에 추가적인 보안 관련 정보를 첨부
+        timeStampTokenGenerator.addCRLs(certs)
+        timeStampTokenGenerator.addCertificates(certs)
 
         // Timestamp Token을 반환
-        return tstGen.generate(request, BigInteger.ONE, PdfSign.date).encoded
+        return timeStampTokenGenerator.generate(request, BigInteger.ONE, PdfSign.date).encoded
     }
+
 
     // SignerInformation에 Timestamp Token을 추가하고 반환하는 함수
     private fun signTimeStamp(signer: SignerInformation): SignerInformation {
-        // UnsignedAttributes 가져오기
-        val unsignedAttributes = signer.unsignedAttributes
+        // ASN1은 데이터 구조와 표현을 기술하기 위한 표준
         var vector = ASN1EncodableVector()
 
         // UnsignedAttributes가 존재하면 vector에 추가
-        if (unsignedAttributes != null) {
-            vector = unsignedAttributes.toASN1EncodableVector()
+        if (signer.unsignedAttributes != null) {
+            vector = signer.unsignedAttributes.toASN1EncodableVector()
         }
 
-        // Timestamp Token 생성 및 추가
-        token = getTimeStampToken(signer.signature)
+        // 현재 signer에 대한 Timestamp Token을 얻음
+        timeStampToken = getTimeStampToken(signer.signature)
+        // Timestamp Token을 나타내는 ASN1 객체 식별자(OID)를 설정
         val oid = PKCSObjectIdentifiers.id_aa_signatureTimeStampToken
-        val signatureTimeStamp: ASN1Encodable = Attribute(oid, DERSet(ASN1Primitive.fromByteArray(token)))
+        // ASN1 구조를 이용하여 Timestamp Token을 포함하는 Attribute 객체를 생성
+        // oid는 Timestamp Token을 식별하는데 사용되며, DERSet을 이용하여 token을 ASN.1으로 변환한 후 Attribute에 추가
+        val signatureTimeStamp: ASN1Encodable = Attribute(oid, DERSet(ASN1Primitive.fromByteArray(timeStampToken)))
+        // 앞에서 생성한 Attribute 객체를 vector에 추가
+        // vector는 나중에 SignerInformation 객체에 추가될 UnsignedAttributes의 일부로 사용됩니다.
         vector.add(signatureTimeStamp)
 
         // 새로운 SignedAttributes 생성
         val signedAttributes = Attributes(vector)
 
-        // UnsignedAttributes를 새로운 SignedAttributes로 교체하여 반환
+        // 새로운 SignedAttributes를 만들 때 기존의 UnsignedAttributes를 포함하여 반환
         return SignerInformation.replaceUnsignedAttributes(signer, AttributeTable(signedAttributes)) ?: signer
     }
 
-    // CMSSignedData에 있는 모든 SignerInformation에 대해 Timestamp Token을 추가하여 반환하는 함수
+
+    // CMSSignedData에 있는 각 SignerInformation에 대해 Timestamp Token을 추가하여 새로운 CMSSignedData 객체를 반환하는 함수
+    // 기존의 서명 데이터에 각 서명자의 Timestamp Token을 추가하여 새로운 서명 데이터를 생성하는 역할
     fun signTimeStamps(signedData: CMSSignedData): CMSSignedData {
+        //각 서명자(SignerInformation)에 대한 정보를 담고 있는 SignerInformationStore를 가져옵니다.
         val signerStore = signedData.signerInfos
         val newSigners: MutableList<SignerInformation> = mutableListOf()
 

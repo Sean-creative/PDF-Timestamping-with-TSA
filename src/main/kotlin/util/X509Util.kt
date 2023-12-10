@@ -2,7 +2,6 @@ package util
 
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
-import javax.security.auth.x500.X500Principal
 
 object X509Util {
 
@@ -13,9 +12,9 @@ object X509Util {
      * @param signerCert 정렬에 사용되는 서명자 인증서입니다.
      * @return 정렬된 X.509 인증서 체인입니다.
      */
-    fun SortX509Chain(certificateChain: Array<Certificate?>, signerCert: Certificate): Array<Certificate?> {
+    fun sortX509Chain(certificateChain: Array<Certificate?>, signerCert: Certificate): Array<Certificate?> {
         val signCertificate = signerCert as X509Certificate
-        val unsorted: MutableList<X509Certificate> = ArrayList()
+        val unsorted: MutableList<X509Certificate> = mutableListOf()
 
         // 인증서 체인을 X.509 인증서의 목록으로 변환합니다.
         for (i in certificateChain.indices) {
@@ -24,12 +23,12 @@ object X509Util {
         }
 
         // 목록의 X.509 인증서를 정렬합니다.
-        val X509Sorted = SortX509Chain(unsorted, signCertificate)
+        val x509Sorted = sortX509Chain(unsorted, signCertificate)
 
         // 정렬된 목록을 다시 Certificate 배열로 변환합니다.
         val certSorted = arrayOfNulls<Certificate>(certificateChain.size)
         for (i in certificateChain.indices) {
-            certSorted[i] = X509Sorted[i] as Certificate
+            certSorted[i] = x509Sorted[i] as Certificate
         }
 
         return certSorted
@@ -42,7 +41,7 @@ object X509Util {
      * @param signerCert 정렬에 사용되는 서명자 인증서입니다.
      * @return 정렬된 X.509 인증서 체인입니다.
      */
-    fun SortX509Chain(chain: List<X509Certificate?>, signerCert: X509Certificate): List<X509Certificate> {
+    private fun sortX509Chain(chain: List<X509Certificate?>, signerCert: X509Certificate): List<X509Certificate> {
         val sorted: MutableList<X509Certificate> = ArrayList()
         sorted.add(signerCert)
         var cert = signerCert

@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 object PdfSign {
-    const val KEYSTORE_TYPE = "PKCS12"
+    private const val KEYSTORE_TYPE = "PKCS12"
 
     lateinit var cert: Cert
     lateinit var date: Date
@@ -21,16 +21,21 @@ object PdfSign {
     // PDF 서명에 필요한 파라미터를 담는 데이터 클래스
     class Param(val pdfFile: ByteArray, val cert: Cert, val date: String?)
 
-    // P12 파일을 기반으로 Certificate 객체 생성하는 함수
+
+    // P12 파일을 기반으로 개인키도 추출하고, 인증서도 넣어서 Certificate 객체 생성하는 함수
     private fun cert(p12File: String, password: String, isUrl: Boolean = false): Cert? {
         val pwCharArray = password.toCharArray()
+        //KeyStore는 Java에서 암호화된 개인 키, 디지털 인증서 및 인증서 체인을 저장하는 데 사용되는 클래스
+        //PKCS #12 형식의 키 저장소 가져옴
         val keystore = KeyStore.getInstance(KEYSTORE_TYPE)
 
         // P12 파일을 URL에서 읽을지 파일에서 읽을지 선택
         if (isUrl) keystore.load(URL(p12File).openStream(), pwCharArray)
         else keystore.load(File(p12File).inputStream(), pwCharArray)
 
+        //키 저장소에 포함된 모든 키 엔트리(개인 키 및 인증서 쌍)의 별칭(alias) 목록을 얻습니다
         val aliases = keystore.aliases()
+        //단 여러개의 별칭이 있어도 첫번째 별칭만 처리함
         if (aliases.hasMoreElements()) {
             val alias = aliases.nextElement()
             return Cert(
@@ -44,9 +49,7 @@ object PdfSign {
 
     // PDF 파일을 서명하여 바이트 배열로 반환하는 함수
     private fun signByteArray(param: Param): ByteArray? {
-        cert = param.cert
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-
         // 날짜가 주어진 경우 UTC로 변환하여 설정
         param.date?.also {
             val d = it.split(' ')
@@ -56,7 +59,6 @@ object PdfSign {
                 calendar.set(ymd[0].toInt(), ymd[1].toInt() - 1, ymd[2].toInt(), hmi[0].toInt(), hmi[1].toInt(), hmi[2].toInt())
             }
         }
-
         date = calendar.time
 
         // SignAndTimeStamp 객체를 통해 PDF 서명 수행
