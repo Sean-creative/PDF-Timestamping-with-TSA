@@ -63,16 +63,16 @@ class Tsa {
 
 
         // TimeStampRequestGenerator = Timestamp Token을 요청하기 위한 정보를 생성하는 데 사용
-        val tsaGenerator = TimeStampRequestGenerator()
+        val timeStampRequestGenerator = TimeStampRequestGenerator()
         // 인증서를 요청하도록 설정
-        tsaGenerator.setCertReq(true)
+        timeStampRequestGenerator.setCertReq(true)
 
         // 현재 해시 알고리즘에 해당하는 ASN.1 OID (Object Identifier)를 가져옴
         val oid = getHashObjectIdentifier(digest.algorithm)
-        // TSA에게 전송할 Timestamp Token 요청을 생성합니다.
+        // timeStampRequestGenerator에게 전송할 Timestamp Token 요청을 생성합니다.
         // oid는 사용된 해시 알고리즘의 OID이고, hash는 서명에 사용된 데이터의 해시 값입니다.
         // BigInteger.valueOf(nonce.toLong())는 Replay 공격을 방지하기 위해 생성된 고유한 난수입니다.
-        val request: TimeStampRequest = tsaGenerator.generate(oid, hash, BigInteger.valueOf(nonce.toLong()))
+        val request: TimeStampRequest = timeStampRequestGenerator.generate(oid, hash, BigInteger.valueOf(nonce.toLong()))
 
         // 서명 정보를 생성
         val signerInfoGenerator: SignerInfoGenerator = JcaSimpleSignerInfoGeneratorBuilder().build(
@@ -85,6 +85,7 @@ class Tsa {
             .setProvider(BouncyCastleProvider())
             .build()
             .get(signerInfoGenerator.digestAlgorithm)
+
         // TimeStampTokenGenerator를 통해 나중에 타임스탬프 토큰을 생성
         val timeStampTokenGenerator = TimeStampTokenGenerator(
             signerInfoGenerator, digestCalculator, ASN1ObjectIdentifier("2.5.29.32.0")
@@ -133,9 +134,9 @@ class Tsa {
 
     // CMSSignedData에 있는 각 SignerInformation에 대해 Timestamp Token을 추가하여 새로운 CMSSignedData 객체를 반환하는 함수
     // 기존의 서명 데이터에 각 서명자의 Timestamp Token을 추가하여 새로운 서명 데이터를 생성하는 역할
-    fun signTimeStamps(signedData: CMSSignedData): CMSSignedData {
+    fun signTimeStamps(cmsSignedData: CMSSignedData): CMSSignedData {
         //각 서명자(SignerInformation)에 대한 정보를 담고 있는 SignerInformationStore를 가져옵니다.
-        val signerStore = signedData.signerInfos
+        val signerStore = cmsSignedData.signerInfos
         val newSigners: MutableList<SignerInformation> = mutableListOf()
 
         // 모든 SignerInformation에 대해 Timestamp Token 추가
@@ -144,6 +145,6 @@ class Tsa {
         }
 
         // 기존의 SignerInformation을 새로운 것으로 교체하여 반환
-        return CMSSignedData.replaceSigners(signedData, SignerInformationStore(newSigners))
+        return CMSSignedData.replaceSigners(cmsSignedData, SignerInformationStore(newSigners))
     }
 }

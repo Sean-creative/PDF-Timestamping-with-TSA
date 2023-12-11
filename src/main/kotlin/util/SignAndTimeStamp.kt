@@ -37,14 +37,10 @@ class SignAndTimeStamp(private val param: PdfSign.Param) : SignatureInterface {
     @Throws(IOException::class)
     override fun sign(inputStream: InputStream): ByteArray {
         return try {
-            // 인증서 목록 설정
-            val certList: MutableList<Certificate?> = ArrayList()
-            // X.509 인증서 체인의 모든 요소가 addAll
-            certList.addAll(param.cert.certificateChain)
             // JcaCertStore는 Bouncy Castle 라이브러리의 클래스로 X.509 인증서를 저장하고 관리하는데 사용됩니다.
             // certList에 있는 X.509 인증서들을 이용하여 certStore 객체를 생성합니다.
             // 이 객체는 나중에 CMS 서명 데이터에 추가될 것입니다. (이상하게 CMS 서명데이터 안에, certStore가 들어가네?)
-            val certStore: Store<*> = JcaCertStore(certList)
+            val certStore: Store<*> = JcaCertStore(param.cert.certificateChain.toMutableList())
 
             // Bouncy Castle 라이브러리를 사용하여 CMS (Cryptographic Message Syntax) 형식의 서명 데이터를 생성하는 과정
             // CMSSignedDataGenerator = CMS 서명 데이터를 생성하는 데 사용
@@ -95,7 +91,9 @@ class SignAndTimeStamp(private val param: PdfSign.Param) : SignatureInterface {
             // 서명 값을 PDF 외부에 저장하고 서명의 일부로써 참조할 수 있도록 하는 서명 방식
             signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED)
 
+
             signature.signDate = Calendar.getInstance()
+
             // PDF 문서의 구조는 카탈로그 객체를 중심으로 구성됩니다.
             val catalogDict = doc.documentCatalog.cosObject
             // 카탈로그 객체를 업데이트해야 함을 표시합니다. 이는 서명을 추가하고 문서를 저장할 때 필요한 작업입니다.

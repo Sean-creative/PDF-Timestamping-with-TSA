@@ -86,6 +86,7 @@ object PdfSign {
             signByteArray(
                 // date는 원하는 시간을 하드코딩 해도 됩니다. ex) 2023-12-07 01:22:22
                 // 단, UTC 기준으로 넣어야하기 때문에 PDF 입장에서 +9시간을 했을 때 미래시간으로 인식하는 오류를 조심하세요.
+//                Param(File("sample.pdf").readBytes(), cert, formattedUTCTime)
                 Param(File("sample.pdf").readBytes(), cert, formattedUTCTime)
             )?.also {
                 // 서명된 PDF 파일을 새로운 파일로 저장
