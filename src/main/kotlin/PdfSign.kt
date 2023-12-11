@@ -21,7 +21,6 @@ object PdfSign {
     // PDF 서명에 필요한 파라미터를 담는 데이터 클래스
     class Param(val pdfFile: ByteArray, val cert: Cert, val date: String?)
 
-
     // P12 파일을 기반으로 개인키도 추출하고, 인증서도 넣어서 Certificate 객체 생성하는 함수
     private fun cert(p12File: String, password: String, isUrl: Boolean = false): Cert? {
         val pwCharArray = password.toCharArray()
