@@ -42,8 +42,7 @@ internal class CMSProcessableInputStream(private val contentType: ASN1ObjectIden
      * @throws CMSException CMS 예외
      */
     @Throws(IOException::class, CMSException::class)
-    override fun write(out: OutputStream) {
-        // 컨텐츠를 한 번만 읽음
+    override fun write(out: OutputStream) { // 컨텐츠를 한 번만 읽음
         IOUtils.copy(`in`, out)
         `in`.close()
     }

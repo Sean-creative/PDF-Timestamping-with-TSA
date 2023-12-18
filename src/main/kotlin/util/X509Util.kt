@@ -30,7 +30,6 @@ object X509Util {
         for (i in certificateChain.indices) {
             certSorted[i] = x509Sorted[i] as Certificate
         }
-
         return certSorted
     }
 
@@ -65,7 +64,6 @@ object X509Util {
                 }
             }
         }
-
         return sorted
     }
 }
